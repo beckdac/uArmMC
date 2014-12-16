@@ -1,0 +1,50 @@
+##******************************************************************************
+## Makefile.core
+## David Andrew Crawford Beck
+## dacb@u.washington.edu
+## Copyright: (C) 2007 by David Andrew Crawford Beck
+## Original:
+##	Mon Sep 10 10:21:38 PDT 2007
+## Modified:
+##*****************************************************************************/
+
+OPTIONS = -DDEBUG
+OPTIONS = -Wall -funsigned-char -funsigned-bitfields -ffunction-sections -fpack-struct -fshort-enums
+
+CFLAGS	= $(COPTS) $(INLINE) $(OPTIONS) -Iinclude -I../include
+LIBS	= $(LIBPATH) -lm -lpthread
+
+DATE	= $(shell date +"%a %b %d %Y @ %H:%M:%S")
+
+LIB_SRCS	= lib/error.c lib/socket.c lib/print.c lib/net.c lib/sndup.c lib/file.c 
+LIB_OBJS	= $(LIB_SRCS:.c=.o)
+MAIN_SRCS	= main.c
+MAIN_OBJS	= $(MAIN_SRCS:.c=.o)
+
+SRCS	= $(LIB_SRCS) $(MAIN_SRCS)
+OBJS	= $(LIB_OBJS) 
+BINS	= uArmMC
+
+default: all
+
+install: all
+
+all: $(BINS) $(MAKEFILE)
+
+Makefile.depend:
+	touch Makefile.depend
+
+depend: Makefile.depend
+	makedepend -fMakefile.depend -- $(CFLAGS) -- $(SRCS)
+
+uArmMC: $(MAIN_OBJS) $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $< $(OBJS) $(LIBS)
+
+.c.o: $(HDRS) $(MAKEFILE)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+#clean: depend
+clean:
+	/bin/rm -rf $(BINS) $(OBJS) $(MAIN_OBJS) 
+
+include Makefile.depend
