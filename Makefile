@@ -4,6 +4,6 @@ LIBPATH =
 
 INLINE =
 
-MAKEFILE = Makefile.gcc
+MAKEFILE = Makefile
 
 include Makefile.core

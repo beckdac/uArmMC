@@ -1,9 +1,0 @@
-CC = gcc
-COPTS = -g -O0 -Wall -DDEBUG
-LIBPATH = -L/usr/X11/lib -lpng
-
-INLINE =
-
-MAKEFILE = Makefile.gcc
-
-include Makefile.core
