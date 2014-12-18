@@ -10,9 +10,13 @@
 
 #define DEFAULT_PORT 2000
 
-void socket_init(char *ip_and_port);
-void socket_send(unsigned char *buff, unsigned int bytes);
-void socket_receive(unsigned char *buff, unsigned int bytes);
+#define SOCKET_RECV_TIMEOUT_MS 2000
+
+int socket_init(char *ip_and_port);
+int socket_set_recv_timeout(unsigned int timeout_ms);
+int socket_set_send_timeout(unsigned int timeout_ms);
+int socket_send(unsigned char *buff, unsigned int bytes);
+int socket_receive(unsigned char *buff, unsigned int bytes);
 void socket_destroy(void);
 
 struct socket_struct {

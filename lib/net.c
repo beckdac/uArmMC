@@ -6,25 +6,25 @@ int net_tcp_cli_init(char *hostname, int port, struct sockaddr_in *servaddr) {
 	struct hostent *host;
 
 	/* create a new socket */
-        if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		warning("net_tcp_cli_init: unable to create a new socket when attempting to connect to '%s':\n\t%s\n", hostname, strerror(errno));
-                return -1;
-        }
+	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		warning("%s: unable to create a new socket when attempting to connect to '%s':\n\t%s\n", __PRETTY_FUNCTION__, hostname, strerror(errno));
+		return -1;
+	}
 	/* resolve host name */
 	if ((host = gethostbyname(hostname)) == NULL) {
-		warning("net_tcp_cli_init: unable to get host information for '%s':\n\t%s\n", hostname, hstrerror(h_errno));
+		warning("%s: unable to get host information for '%s':\n\t%s\n", __PRETTY_FUNCTION__, hostname, hstrerror(h_errno));
 		return -1;
 	}
 	/* set up socket address structures */
-        memset(servaddr,  0 , sizeof(struct sockaddr_in));
-        servaddr->sin_family = AF_INET;
-        servaddr->sin_port = htons(port);
+	memset(servaddr,  0 , sizeof(struct sockaddr_in));
+	servaddr->sin_family = AF_INET;
+	servaddr->sin_port = htons(port);
 	servaddr->sin_addr.s_addr = inet_addr(inet_ntoa(*((struct in_addr *)host->h_addr)));
 	/* initiate a connection */
-        if (connect(sock, (struct sockaddr *)servaddr, sizeof(struct sockaddr)) == -1) {
-                warning("net_tcp_cli_init: connect error for host '%s' on port %d:\n\t%s\n", hostname, port, strerror(errno));
-                return -1;
-        }
+	if (connect(sock, (struct sockaddr *)servaddr, sizeof(struct sockaddr)) == -1) {
+		warning("%s: connect error for host '%s' on port %d:\n\t%s\n", __PRETTY_FUNCTION__, hostname, port, strerror(errno));
+		return -1;
+	}
 
 	return sock;
 }
@@ -33,28 +33,28 @@ int net_tcp_ser_init(int port, struct sockaddr_in *servaddr) {
 	int sock, opt;
 
 	/* create a new socket */
-        if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		warning("net_tcp_ser_init: unable to create a new socket for service on port %d:\n\t%s\n", port, strerror(errno));
-                return -1;
-        }
+	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		warning("%s: unable to create a new socket for service on port %d:\n\t%s\n", __PRETTY_FUNCTION__, port, strerror(errno));
+		return -1;
+	}
 	opt = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(int)) < 0){
-		warning("net_tcp_ser_init: setsockopt REUSEADDR failed for service on port %d:\n\t%s\n", port, strerror(errno));
-                return -1;
+		warning("%s: setsockopt REUSEADDR failed for service on port %d:\n\t%s\n", __PRETTY_FUNCTION__, port, strerror(errno));
+		return -1;
 	}
 	/* set up socket address structures */
-        memset(servaddr,  0 , sizeof(struct sockaddr_in));
-        servaddr->sin_family = AF_INET;
+	memset(servaddr,  0 , sizeof(struct sockaddr_in));
+	servaddr->sin_family = AF_INET;
 	servaddr->sin_addr.s_addr = INADDR_ANY;
-        servaddr->sin_port = htons(port);
+	servaddr->sin_port = htons(port);
 	/* bind the socket to the port */
 	if (bind(sock, (struct sockaddr *)servaddr, sizeof(struct sockaddr_in)) == -1) {
-		warning("net_tcp_ser_init: bind error for service on port %d:\n\t%s\n", port, strerror(errno));
+		warning("%s: bind error for service on port %d:\n\t%s\n", __PRETTY_FUNCTION__, port, strerror(errno));
 		return -1;
 	}
 	/* begin to listen on the port */
 	if (listen(sock, NET_TCP_DEFAULT_BACKLOG) == -1) {
-		warning("net_tcp_ser_init: listen error for service on port %d:\n\t%s\n", port, strerror(errno));
+		warning("%s: listen error for service on port %d:\n\t%s\n", __PRETTY_FUNCTION__, port, strerror(errno));
 		return -1;
 	}
 
@@ -69,7 +69,7 @@ int net_tcp_ser_accept(int listen_sock, struct sockaddr_in *servaddr, struct soc
 
 	/* accept the connection */
 	if ((sock = accept(listen_sock, (struct sockaddr *)cliaddr, (socklen_t *)&addrlen)) == -1) {
-		warning("net_tcp_ser_init: accept connection error for service on port %d:\n\t%s\n", ntohl(servaddr->sin_port), strerror(errno));
+		warning("%s: accept connection error for service on port %d:\n\t%s\n", __PRETTY_FUNCTION__, ntohl(servaddr->sin_port), strerror(errno));
 		return -1;
 	}
 	return sock;
@@ -81,12 +81,12 @@ int net_udp_cli_init(char *hostname, int port, struct sockaddr_in *servaddr) {
 
 	/* create a new socket */
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-		warning("net_udp_cli_init: unable to create a new socket when attempting to connect to '%s':\n\t%s\n", hostname, strerror(errno));
-                return -1;
+		warning("%s: unable to create a new socket when attempting to connect to '%s':\n\t%s\n", __PRETTY_FUNCTION__, hostname, strerror(errno));
+		return -1;
 	}
 	/* resolve host name */
 	if ((host = gethostbyname(hostname)) == NULL) {
-		warning("net_udp_cli_init: unable to get host information for '%s':\n\t%s\n", hostname, hstrerror(h_errno));
+		warning("%s: unable to get host information for '%s':\n\t%s\n", __PRETTY_FUNCTION__, hostname, hstrerror(h_errno));
 		return -1;
 	}
 	/* set up socket address structures */
@@ -103,15 +103,15 @@ int net_send(int sock, void *buf, size_t len) {
 	int sent = 0;
 	int bytes;
 
-        while (sent < len) {
-            bytes = send(sock, (void *)((char *)buf + sent), remaining, 0);
-            if (bytes == -1)
+	while (sent < len) {
+	    bytes = send(sock, (void *)((char *)buf + sent), remaining, 0);
+	    if (bytes == -1)
 		break;
-            sent += bytes;
-            remaining -= bytes;
-        }
+	    sent += bytes;
+	    remaining -= bytes;
+	}
 
-        return (bytes == -1 ? -1 : sent);
+	return (bytes == -1 ? -1 : sent);
 } 
 
 int net_recv(int sock, void *buf, size_t len) {

@@ -12,13 +12,13 @@ OPTIONS = -DDEBUG
 OPTIONS = -Wall -funsigned-char -funsigned-bitfields -ffunction-sections -fpack-struct -fshort-enums
 
 CFLAGS	= $(COPTS) $(INLINE) $(OPTIONS) -Iinclude -I../include
-LIBS	= $(LIBPATH) -lm -lpthread
+LIBS	= $(LIBPATH) -lm 
 
 DATE	= $(shell date +"%a %b %d %Y @ %H:%M:%S")
 
 LIB_SRCS	= lib/error.c lib/socket.c lib/print.c lib/net.c lib/sndup.c lib/file.c 
 LIB_OBJS	= $(LIB_SRCS:.c=.o)
-MAIN_SRCS	= main.c
+MAIN_SRCS	= main.c cmd.c
 MAIN_OBJS	= $(MAIN_SRCS:.c=.o)
 
 SRCS	= $(LIB_SRCS) $(MAIN_SRCS)
@@ -38,10 +38,13 @@ depend: Makefile.depend
 	makedepend -fMakefile.depend -- $(CFLAGS) -- $(SRCS)
 
 uArmMC: $(MAIN_OBJS) $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $< $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $(MAIN_OBJS)  $(OBJS) $(LIBS)
 
 .c.o: $(HDRS) $(MAKEFILE)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+test: uArmMC
+	./uArmMC 192.168.1.20:23 test.cmd
 
 #clean: depend
 clean:
