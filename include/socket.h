@@ -10,7 +10,7 @@
 
 #define DEFAULT_PORT 2000
 
-#define SOCKET_RECV_TIMEOUT_MS 2000
+#define SOCKET_RECV_TIMEOUT_MS 5000
 
 int socket_init(char *ip_and_port);
 int socket_set_recv_timeout(unsigned int timeout_ms);
