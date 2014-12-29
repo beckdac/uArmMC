@@ -9,6 +9,7 @@
 #include "file.h"
 
 #include "cmd.h"
+#include "ik.h"
 
 #define MAX_BUF_LEN 1024
 char inbuf[MAX_BUF_LEN];
@@ -18,7 +19,7 @@ int main(int argc, char *argv[]) {
 	char *cmd_file, *cmd_string, *cmd;
 
 	if (argc != 3)
-		fatal_error("usage: %s <IP address:port> <command file>\n", argv[0]);
+		fatal_error("usage: %s <IP address:port> <'iktest'|command file>\n", argv[0]);
 
 	// initialize the network connection
 	ip_and_port = argv[1];
@@ -27,6 +28,15 @@ int main(int argc, char *argv[]) {
 	}
 	if (!cmd_prepare_channel()) {
 		fatal_error("%s: failed to prepare command channel\n", __PRETTY_FUNCTION__);
+	}
+
+	if (strcmp(argv[2], "iktest") == 0) {
+
+		ik_test();
+
+		socket_destroy();
+
+		exit(EXIT_SUCCESS);
 	}
 
 	// read the command file
