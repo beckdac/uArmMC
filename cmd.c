@@ -19,8 +19,10 @@ int cmd_response_len = 0;
 int cmd_response_check(char *check) {
 	int len = strlen(check);
 
-	if (len - cmd_response_len < 0) 
+	//printf("cmd_response = %s\n", cmd_response);
+	if (cmd_response_len - len < 0) 
 		return 0;
+	//printf("cmd_response[%d] = %s\n", cmd_response_len - len, &cmd_response[cmd_response_len - len]);
 	if (strncmp(&cmd_response[cmd_response_len - len], check, len) != 0)
 		return 0;
 
@@ -54,10 +56,12 @@ int cmd_execute(char *cmd, unsigned int cmd_len) {
 		warning("%s: incomplete send of command: %s\n", __PRETTY_FUNCTION__, cmd);
 		return -1;
 	}
+	printf("%s\n", cmd);
 
 	gettimeofday(&receive_start, NULL);
 
 	// receive response
+//int i = 0;
 	do {
 		if (cmd_response_len == MAX_RESPONSE_LEN - 1) {
 			warning("%s: response too long for command: %s\n", __PRETTY_FUNCTION__, cmd);
@@ -72,6 +76,7 @@ int cmd_execute(char *cmd, unsigned int cmd_len) {
 			return -1;
 		}
 		cmd_response[cmd_response_len] = '\0';
+		//printf("%d: %s\n", i, cmd_response);
 		if (cmd_response_check("OK\n")) {
 			cmd_receive_state = RECEIVED_OK;
 		} else if (cmd_response_check("ERROR")) {
@@ -90,6 +95,8 @@ int cmd_execute(char *cmd, unsigned int cmd_len) {
 				return -1;
 			}
 		}
+		//printf("%d: %s\n", i, cmd_response);
+		//++i;
 	} while (cmd_receive_state == RECEIVING);
 
 	gettimeofday(&end, NULL);
