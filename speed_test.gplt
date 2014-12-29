@@ -1,0 +1,14 @@
+set terminal png
+set output 'speed_test.png'
+
+set xlabel "Response time total for send & recv complete response (ms)"
+set ylabel "Frequency"
+
+set title "Response time histogram for M101 command"
+
+set style data histogram
+set style histogram cluster gap 1
+set style fill solid border -1
+set boxwidth 0.9
+
+plot 'speed_test.histogram' using 2:xtic(1) ti "M101"
