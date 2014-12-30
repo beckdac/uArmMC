@@ -43,20 +43,19 @@ int cmd_execute(char *cmd, unsigned int cmd_len) {
 	long send_ms, receive_ms, total_ms;
 	cmd_response_len = 0;
 
-	printf("sending command: %s\n", cmd);
+	printf("sending command: %s", cmd);
 
 	gettimeofday(&start, NULL);
 
 	// send
 	ret = socket_send((unsigned char *)cmd, cmd_len);
 	if (ret == -1) {
-		warning("%s: failed to send command: %s\n", __PRETTY_FUNCTION__, cmd);
+		warning("%s: failed to send command: %s", __PRETTY_FUNCTION__, cmd);
 		return -1;
 	} else if (ret != cmd_len) {
-		warning("%s: incomplete send of command: %s\n", __PRETTY_FUNCTION__, cmd);
+		warning("%s: incomplete send of command: %s", __PRETTY_FUNCTION__, cmd);
 		return -1;
 	}
-	printf("%s\n", cmd);
 
 	gettimeofday(&receive_start, NULL);
 
@@ -64,15 +63,15 @@ int cmd_execute(char *cmd, unsigned int cmd_len) {
 //int i = 0;
 	do {
 		if (cmd_response_len == MAX_RESPONSE_LEN - 1) {
-			warning("%s: response too long for command: %s\n", __PRETTY_FUNCTION__, cmd);
+			warning("%s: response too long for command: %s", __PRETTY_FUNCTION__, cmd);
 			return -1;
 		}
 		ret = socket_receive((unsigned char *)&cmd_response[cmd_response_len++], 1);
 		if (ret == -1) {
-			warning("%s: incomplete response for command: %s\n", __PRETTY_FUNCTION__, cmd);
+			warning("%s: incomplete response for command: %s", __PRETTY_FUNCTION__, cmd);
 			return -1;
 		} else if (ret != 1) {
-			warning("%s: unexpected response receive length for command: %s\n", __PRETTY_FUNCTION__, cmd);
+			warning("%s: unexpected response receive length for command: %s", __PRETTY_FUNCTION__, cmd);
 			return -1;
 		}
 		cmd_response[cmd_response_len] = '\0';
@@ -88,10 +87,10 @@ int cmd_execute(char *cmd, unsigned int cmd_len) {
 			}
 			cmd_response[cmd_response_len] = '\0';
 			if (cmd_response_len == MAX_RESPONSE_LEN - 1) {
-				warning("%s: response too long for command, after ERROR detected: %s\n\tresponse so far:\n\t\t%s\n", __PRETTY_FUNCTION__, cmd, cmd_response);
+				warning("%s: response too long for command, after ERROR detected: %s\n\tresponse so far:\n\t\t%s", __PRETTY_FUNCTION__, cmd, cmd_response);
 				return -1;
 			} else if (ret == -1) {
-				warning("%s: incomplete response for command, after ERROR detected: %s\n\tresponse so far:\n\t\t%s\n", __PRETTY_FUNCTION__, cmd, cmd_response);
+				warning("%s: incomplete response for command, after ERROR detected: %s\n\tresponse so far:\n\t\t%s", __PRETTY_FUNCTION__, cmd, cmd_response);
 				return -1;
 			}
 		}
@@ -103,8 +102,31 @@ int cmd_execute(char *cmd, unsigned int cmd_len) {
 	send_ms = tvdiff_ms(&start, &receive_start);
 	receive_ms = tvdiff_ms(&receive_start, &end);
 	total_ms = tvdiff_ms(&start, &end);
-	printf("response times (ms: send, receive, total): %ld\t%ld\t%ld\n", send_ms, receive_ms, total_ms);
+	print("response times (ms: send, receive, total): %ld\t%ld\t%ld", send_ms, receive_ms, total_ms);
 
-	printf("command response: %s\n", cmd_response);
+	print("command response: %s", cmd_response);
+	return 1;
+}
+
+int cmd_batch(char *cmd_file) {
+    char *file, *cmd_string, *cmd;
+
+    // read the command file
+    file = file_read_to_char_buf(cmd_file);
+	if (!file) {
+		warning("unable to read batch command file '%s'\n", cmd_file);
+		return 0;
+	}
+    cmd_string = file;
+    while((cmd = strsep(&cmd_string, "\n\r")) != NULL) {
+        char *buf;
+        if (*cmd == '\0') continue; // blank line
+        if (*cmd == '#') { printf("%s\n", cmd); continue; } // comment line 
+        buf = sndup("%s\n", cmd);
+        cmd_execute(buf, strlen(buf));
+        free(buf);
+    }
+    free(file);
+
 	return 1;
 }
