@@ -49,7 +49,7 @@ void fk(float phi, float theta1, float theta2, float *x, float *y, float *z) {
 	
 	*x = sinf(degrees2radians(phi)) * (a1 * cosf(degrees2radians(theta1)) + a2 * cosf(degrees2radians(theta1) - degrees2radians(theta2)));
 	*y = cosf(degrees2radians(phi)) * (a1 * cosf(degrees2radians(theta1)) + a2 * cosf(degrees2radians(theta1) - degrees2radians(theta2)));
-	*z = a2 * sinf(degrees2radians(theta1)) + a2 * sinf(degrees2radians(theta1) - degrees2radians(theta2));
+	*z = a2 * sinf(degrees2radians(theta1)) + (a2 * sinf(degrees2radians(theta1) - degrees2radians(theta2)));
 }
 
 void km_test(void) {
@@ -65,7 +65,8 @@ void km_test(void) {
 			for (stR = km_servo[servoR].s_min; stR <= km_servo[servoR].s_max; stR += 4) {
 				tR = map(stR, km_servo[servoR].s_min, km_servo[servoR].s_max, km_servo[servoR].t_min, km_servo[servoR].t_max);
 				fk(phi, tR, tL, &x, &y, &z);
-				printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", tL, tR, phi, x, y, z);
+				//printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", tL, tR, phi, x, y, z);
+				printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", stL, stR, stO, x, y, z);
 			}
 		}
 	}
