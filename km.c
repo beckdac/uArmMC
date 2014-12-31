@@ -7,8 +7,8 @@
 const float Z_offset = 137.;	// base to shoulder
 const float a1=145.5;			// shoulder to elbow length
 const float a2=158.7;			// elbow to wrise length
+const float b0=93;				// bed to shoulder height
 #warning estimate, need to remeasure
-const float b0=50;				// bed to shoulder height
 const float a3=0;			// sum of base to shoulder in plane of surface and wrist to effector
 
 typedef enum { servoL = 0, servoR = 1, servoRot = 2, servoHRot = 3, servoH = 4 } servoID_t;
