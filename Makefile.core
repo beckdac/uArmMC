@@ -43,14 +43,14 @@ uArmMC: $(MAIN_OBJS) $(OBJS)
 .c.o: $(HDRS) $(MAKEFILE)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-speedtest: uArmMC
-	# speed tests
-	echo "100" | awk '{ for (i = 0; i < $$1; ++i) { printf("M101\n"); } }' > speed_test.cmd 
-	./uArmMC -t batch -s 192.168.1.20:23 -i speed_test.cmd > speed_test.log
-	awk '/^response times / { h[$$NF]++; } END {for(i in h){print h[i],i|"sort -rn|head -20"}}' speed_test.log |awk '!max{max=$$1;}{r="";i=s=60*$$1/max;while(i-->0)r=r"#";printf "%15s %5d %s %s",$$2,$$1,r,"\n";}' | sort -n > speed_test.histogram
-	gnuplot speed_test.gplt
+speed_test: uArmMC
+	# speed test
+	echo "100" | awk '{ for (i = 0; i < $$1; ++i) { printf("M101\n"); } }' > examples/speed_test.cmd 
+	./uArmMC -t batch -s 192.168.1.20:23 -i examples/speed_test.cmd > examples/speed_test.log
+	awk '/response times / { h[$$NF]++; } END {for(i in h){print h[i],i|"sort -rn|head -20"}}' examples/speed_test.log |awk '!max{max=$$1;}{r="";i=s=60*$$1/max;while(i-->0)r=r"#";printf "%15s %5d %s %s",$$2,$$1,r,"\n";}' | sort -n > examples/speed_test.histogram
+	gnuplot examples/speed_test.gplt
 
-sweeptest: uArmMC
+fk_sweep: uArmMC
 	# sweep
 	./uArmMC -t km_test -a fk_sweep > examples/fk_sweep.out
 	awk '{ printf("%s\t%s\t%s\n", $$5, $$6, $$7); }' examples/fk_sweep.out > examples/fk_sweep.xyz
