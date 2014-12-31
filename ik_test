@@ -7,7 +7,7 @@ y=`seq 100 10 180`
 
 for i in $y
 do
-	echo "0 $i 0" | ./uArmMC -t km_test | tail -3 > /tmp/ik_test/$i
+	echo "0 $i 0" | ./uArmMC -t km_test -a ik | tail -3 > /tmp/ik_test/$i
 done
 
 cat << EOF > $gplt
