@@ -144,7 +144,7 @@ float distance(float x1, float y1, float z1, float x2, float y2, float z2) {
 }
 ///
 
-void km_test(void) {
+void km_ik_test(void) {
 	float x, y, z, phi, thetaS, thetaE, X, Y, Z, d, sphi, sthetaS, sthetaE;
 	char line[1024];
 
@@ -176,27 +176,33 @@ void km_test(void) {
 	}
 }
 
-#if 0
-	float origin[3] = { 0, 0, 0 };
-	float shoulder[3] = { 0, 27, 125 };
-	float x, y, z, X, Y, Z, d;
-	float stO, stL, stR, phi, tL, tR, mtO, mtL, mtR;
+void km_fk_test(void) {
+	float x, y, z, phi, thetaS, thetaE, sphi, sthetaS, sthetaE;
+	char line[1024];
 
-	for (stO = km_servo[servoRot].s_min; stO <= km_servo[servoRot].s_max; stO += 4) {
-		phi = map(stO, km_servo[servoRot].s_min, km_servo[servoRot].s_max, km_servo[servoRot].t_min, km_servo[servoRot].t_max);
-		for (stL = km_servo[servoL].s_max; stL <= km_servo[servoL].s_min; stL += 4) {
-			tL = map(stL, km_servo[servoL].s_min, km_servo[servoL].s_max, km_servo[servoL].t_min, km_servo[servoL].t_max);
-			for (stR = km_servo[servoR].s_min; stR <= km_servo[servoR].s_max; stR += 4) {
-				tR = map(stR, km_servo[servoR].s_min, km_servo[servoR].s_max, km_servo[servoR].t_min, km_servo[servoR].t_max);
-				fk(phi, tR, tL, &x, &y, &z);
-				//printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", tL, tR, phi, x, y, z);
-				printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", stL, stR, stO, x, y, z);
-				unsolve(phi, tR, tL, &X, &Y, &Z);
-				d = distance(x, y, z, X, Y, Z);
-				printf("km_test.1\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", stL, stR, stO, X, Y, Z, d);
-				ik(x, y, z, &mtO, &mtL, &mtR);
-				printf("km_test.2\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", radians2degrees(mtL), radians2degrees(mtR), radians2degrees(mtO), x, y, z);
+	while (fgets(line, 1024, stdin) != NULL) {
+		x = y = z = 0;
+		sscanf(line, "%f %f %f", &sphi, &sthetaS, &sthetaE);
+		phi = degrees2radians(map(sphi, km_servo[servoRot].s_min, km_servo[servoRot].s_max, km_servo[servoRot].t_min, km_servo[servoRot].t_max));
+		thetaS = degrees2radians(map(sthetaS, km_servo[servoR].s_min, km_servo[servoR].s_max, km_servo[servoR].t_min, km_servo[servoR].t_max));
+		thetaE = degrees2radians(map(sthetaE, km_servo[servoL].s_min, km_servo[servoL].s_max, km_servo[servoL].t_min, km_servo[servoL].t_max));
+		unsolve(phi, thetaS, thetaE, &x, &y, &z);
+		printf(">\t%.2f\t%.2f\t%.2f\t\t%.2f\t%.2f\t%.2f\n", sphi, sthetaS, sthetaE, x, y, z);
+	}
+}
+
+void km_fk_sweep_test(void) {
+	float x, y, z, phi, thetaS, thetaE, sphi, sthetaS, sthetaE;
+
+	for (sphi = km_servo[servoRot].s_min; sphi <= km_servo[servoRot].s_max; sphi += 4) {
+		phi = map(sphi, km_servo[servoRot].s_min, km_servo[servoRot].s_max, km_servo[servoRot].t_min, km_servo[servoRot].t_max);
+		for (sthetaE = km_servo[servoL].s_max; sthetaE <= km_servo[servoL].s_min; sthetaE += 4) {
+			thetaE = map(sthetaE, km_servo[servoL].s_min, km_servo[servoL].s_max, km_servo[servoL].t_min, km_servo[servoL].t_max);
+			for (sthetaS = km_servo[servoR].s_min; sthetaS <= km_servo[servoR].s_max; sthetaS += 4) {
+				thetaS = map(sthetaS, km_servo[servoR].s_min, km_servo[servoR].s_max, km_servo[servoR].t_min, km_servo[servoR].t_max);
+				unsolve(phi, thetaS, thetaE, &x, &y, &z);
+				printf(">\t%.2f\t%.2f\t%.2f\t\t%.2f\t%.2f\t%.2f\n", sphi, sthetaS, sthetaE, x, y, z);
 			}
 		}
 	}
-#endif
+}

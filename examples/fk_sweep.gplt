@@ -1,0 +1,9 @@
+set xlabel 'X'
+set ylabel 'Y'
+set zlabel 'Z'
+
+set title 'Accessible servo positions for the Lite Arm i2'
+
+set palette model RGB defined ( -100 'magenta', 500 'cyan')
+splot 'examples/fk_sweep.xyz' u 1:2:3:3 with d palette
+pause -1

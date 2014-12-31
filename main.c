@@ -14,19 +14,23 @@
 #include "calibrate.h"
 
 int main(int argc, char *argv[]) {
-	char *task = NULL, *socket = NULL, *device = NULL, *baud = NULL, *in_file = NULL;
+	char *task = NULL, *sub_task = NULL, *socket = NULL, *device = NULL, *baud = NULL, *in_file = NULL;
 	int c;
 
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "t:s:d:b:i:h")) != -1) {
+	while ((c = getopt(argc, argv, "t:a:s:d:b:i:h")) != -1) {
 		switch (c) {
 			case 'h':
 USAGE:
-				printf("usage: %s -t <task> [ [-s <socket>] [-d <device> ] [-b <baud>] [-i <input file>] ]\n", argv[0]);
+				printf("usage: %s -t <task> [ [-a <subtask>] [-s <socket>] [-d <device> ] [-b <baud>] [-i <input file>] ]\n", argv[0]);
 				printf("\t\ttask\ttask name, one of:\n");
 				printf("\t\t\t\tbatch\tsend commands via socket or serial device\n");
 				printf("\t\t\t\tkm_test\tperform tests of the kinematics code\n");
+				printf("\t\tsubtask\tsubtask name, valid for km_test task one of:\n");
+				printf("\t\t\t\tfk\tforward kinematics conversion from stdin\n");
+				printf("\t\t\t\tfk_sweep\tforward kinematics of all safe servo angles\n");
+				printf("\t\t\t\tik\tinverse kinematics conversion from stdin\n");
 				printf("\t\tsocket\tuse a TCP socket to connect to arm\n");
 				printf("\t\t\t\tin the form: 192.168.1.20:23 (IP:port)\n");
 				printf("\t\tdevice\tuse a serial device to connect to arm\n");
@@ -37,6 +41,9 @@ USAGE:
 				break;
 			case 't':
 				task = strdup(optarg);
+				break;
+			case 'a':
+				sub_task = strdup(optarg);
 				break;
 			case 's':
 				socket = strdup(optarg);
@@ -88,7 +95,17 @@ USAGE:
 		cmd_batch(in_file);
 		socket_destroy();
 	} else if (strcmp(task, "km_test") == 0) {
-		km_test();
+		if (!sub_task) {
+			fatal_error("%s: please specify a subtask for km_test; one of 'ik', 'fk', or 'fk_sweep'\n", __PRETTY_FUNCTION__);
+		} else if (strcmp(sub_task, "fk") == 0) {
+			km_fk_test();
+		} else if (strcmp(sub_task, "fk_sweep") == 0) {
+			km_fk_sweep_test();
+		} else if (strcmp(sub_task, "ik") == 0) {
+			km_ik_test();
+		} else {
+			fatal_error("%s: please specify a valid subtask for km_test; one of 'ik', 'fk', or 'fk_sweep'\n", __PRETTY_FUNCTION__);
+		}
 	} else {
 		fprintf(stderr, "unknown task '%s'\n", task);
 		goto USAGE;
