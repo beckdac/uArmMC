@@ -3,6 +3,8 @@
 #include "error.h"
 #include "print.h"
 
+const float PI=3.14159265359;
+
 // units in mm
 const float Z_offset = 137.;	// base to shoulder
 const float a1=145.5;			// shoulder to elbow length
@@ -11,6 +13,7 @@ const float b0=93;				// bed to shoulder height
 #warning estimate, need to remeasure
 const float a3=0;			// sum of base to shoulder in plane of surface and wrist to effector
 
+// for translating from real space to servo space
 typedef enum { servoL = 0, servoR = 1, servoRot = 2, servoHRot = 3, servoH = 4 } servoID_t;
 
 typedef struct km_servo {
@@ -20,11 +23,11 @@ typedef struct km_servo {
 
 #define SERVOS 5
 km_servo_t km_servo[SERVOS] = {
-	{ 115, 50, 40, 100 },
-	{ 40, 90, 30, 80,  },
-	{ 10, 170, -90, 90 },
-	{ 10, 170, -90, 90 },
-	{ 10, 170, -90, 90 }
+	{ 115, 50, 40, 100 },	// elbow
+	{ 40, 90, 30, 80,  },	// shoulder
+	{ 10, 170, -90, 90 },	// base
+	{ 10, 170, -90, 90 },	// hand rotation
+	{ 10, 170, -90, 90 }	// hand
 };
 
 float map(float x, float in_min, float in_max, float out_min, float out_max) {
@@ -44,14 +47,10 @@ void rotate_point(float px, float py, float ox, float oy, float theta, float *rp
 	*rpy = sin(theta) * (px-ox) + cos(theta) * (py-oy) + oy;
 }
 
-////
-void polar2cart(float r, float theta, float *a, float *b)
-{
+void polar2cart(float r, float theta, float *a, float *b) {
 	*a = r * cosf(theta);
 	*b = r * sinf(theta);
 }
-
-const float PI=3.14159265359;
 
 // Get polar coords from cartesian ones
 void cart2polar(float a, float b, float *r, float *theta) {
@@ -138,75 +137,15 @@ void unsolve(float phi, float thetaS, float thetaE, float *x, float *y, float *z
 	*z = v + b0;
 }
 
-float distance(float x1, float y1, float z1, float x2, float y2, float z2)
-{
+float distance(float x1, float y1, float z1, float x2, float y2, float z2) {
 	float dx = x2-x1;
 	float dy = y2-y1;
 	float dz = z2-z1;
-
 	return sqrtf(dx*dx + dy*dy + dz*dz);
 }
 ///
 
-// http://www.hessmer.org/uploads/RobotArm/Inverse%2520Kinematics%2520for%2520Robot%2520Arm.pdf
-void ik_2d(float x, float y, float *thetaS, float *thetaE) {
-	//*thetaE = atan2f(-sqrtf(1-((x*x + y*y - a1*a1 - a2*a2)/(2.*a1*a2))), (x*x + y*y - a1*a1 - a2*a2)/(2.*a1*a2));
-	*thetaE = atan2f(sqrtf(1-((x*x + y*y - a1*a1 - a2*a2)/(2.*a1*a2))), (x*x + y*y - a1*a1 - a2*a2)/(2.*a1*a2));
-	*thetaS = atan2f(y, x)-atan2f(a2 * sinf(*thetaE), a1 + a2*cosf(*thetaE));
-}
-
-void ik(float x, float y, float z, float *phi, float *thetaS, float *thetaE) {
-	float d, zp;
-
-	*phi = atan2f(y, x);
-	d = sqrtf((x * x) + (y * y));
-	zp = z - b0;
-
-	ik_2d(d, zp, thetaS, thetaE);
-}
-//
-
-void fk(float phi, float theta1, float theta2, float *x, float *y, float *z) {
-	// http://profmason.com/?p=569
-	// phi - rotation
-	// theta1 is inclination of shoulder from base plane
-	// theta2 is divergence from vector of shoulder
-	// theta3 is inclination of elbow from base plane
-	// theta4 is angle between shoulder vector and arm vector
-	float theta3, theta4; 
-	theta3 = (180 - theta2) - (180 - theta1);
-	theta4 = (180 - theta2);
-	
-	*x = sinf(degrees2radians(phi)) * ((a1 * cosf(degrees2radians(theta1))) + (a2 * cosf(degrees2radians(theta1) - degrees2radians(theta2))));
-	*y = cosf(degrees2radians(phi)) * ((a1 * cosf(degrees2radians(theta1))) + (a2 * cosf(degrees2radians(theta1) - degrees2radians(theta2))));
-	*z = (a2 * sinf(degrees2radians(theta1))) + (a2 * sinf(degrees2radians(theta1) - degrees2radians(theta2)));
-}
-
 void km_test(void) {
-#if 0
-	float origin[3] = { 0, 0, 0 };
-	float shoulder[3] = { 0, 27, 125 };
-	float x, y, z, X, Y, Z, d;
-	float stO, stL, stR, phi, tL, tR, mtO, mtL, mtR;
-
-	for (stO = km_servo[servoRot].s_min; stO <= km_servo[servoRot].s_max; stO += 4) {
-		phi = map(stO, km_servo[servoRot].s_min, km_servo[servoRot].s_max, km_servo[servoRot].t_min, km_servo[servoRot].t_max);
-		for (stL = km_servo[servoL].s_max; stL <= km_servo[servoL].s_min; stL += 4) {
-			tL = map(stL, km_servo[servoL].s_min, km_servo[servoL].s_max, km_servo[servoL].t_min, km_servo[servoL].t_max);
-			for (stR = km_servo[servoR].s_min; stR <= km_servo[servoR].s_max; stR += 4) {
-				tR = map(stR, km_servo[servoR].s_min, km_servo[servoR].s_max, km_servo[servoR].t_min, km_servo[servoR].t_max);
-				fk(phi, tR, tL, &x, &y, &z);
-				//printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", tL, tR, phi, x, y, z);
-				printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", stL, stR, stO, x, y, z);
-				unsolve(phi, tR, tL, &X, &Y, &Z);
-				d = distance(x, y, z, X, Y, Z);
-				printf("km_test.1\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", stL, stR, stO, X, Y, Z, d);
-				ik(x, y, z, &mtO, &mtL, &mtR);
-				printf("km_test.2\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", radians2degrees(mtL), radians2degrees(mtR), radians2degrees(mtO), x, y, z);
-			}
-		}
-	}
-#else
 	float x, y, z, phi, thetaS, thetaE, X, Y, Z, d;
 	char line[1024];
 
@@ -232,6 +171,29 @@ void km_test(void) {
 			printf("0 %.2f\n%.2f %.2f\n%.2f %.2f\n", b0, ex, ey, wx, wy);
 		}
 	}
-	
-#endif
 }
+
+#if 0
+	float origin[3] = { 0, 0, 0 };
+	float shoulder[3] = { 0, 27, 125 };
+	float x, y, z, X, Y, Z, d;
+	float stO, stL, stR, phi, tL, tR, mtO, mtL, mtR;
+
+	for (stO = km_servo[servoRot].s_min; stO <= km_servo[servoRot].s_max; stO += 4) {
+		phi = map(stO, km_servo[servoRot].s_min, km_servo[servoRot].s_max, km_servo[servoRot].t_min, km_servo[servoRot].t_max);
+		for (stL = km_servo[servoL].s_max; stL <= km_servo[servoL].s_min; stL += 4) {
+			tL = map(stL, km_servo[servoL].s_min, km_servo[servoL].s_max, km_servo[servoL].t_min, km_servo[servoL].t_max);
+			for (stR = km_servo[servoR].s_min; stR <= km_servo[servoR].s_max; stR += 4) {
+				tR = map(stR, km_servo[servoR].s_min, km_servo[servoR].s_max, km_servo[servoR].t_min, km_servo[servoR].t_max);
+				fk(phi, tR, tL, &x, &y, &z);
+				//printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", tL, tR, phi, x, y, z);
+				printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", stL, stR, stO, x, y, z);
+				unsolve(phi, tR, tL, &X, &Y, &Z);
+				d = distance(x, y, z, X, Y, Z);
+				printf("km_test.1\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", stL, stR, stO, X, Y, Z, d);
+				ik(x, y, z, &mtO, &mtL, &mtR);
+				printf("km_test.2\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", radians2degrees(mtL), radians2degrees(mtR), radians2degrees(mtO), x, y, z);
+			}
+		}
+	}
+#endif
