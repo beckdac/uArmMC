@@ -221,6 +221,8 @@ void km_test(void) {
 		unsolve(phi, thetaS, thetaE, &X, &Y, &Z);
 		d = distance(x, y, z, X, Y, Z);
 		printf("<\t%.2f\t%.2f\t%.2f\t\t%.2f\t%.2f\t%.2f\t%.2f\n", X, Y, Z, radians2degrees(phi), radians2degrees(thetaS), radians2degrees(thetaE), d);
+		if (d > 0.01)
+			fatal_error("distance between forward and reverse solutions is > 0.01\n");
 		{
 			float ex, ey, wx, wy;
 			rotate_point(a1, b0, 0, b0, thetaS, &ex, &ey);
