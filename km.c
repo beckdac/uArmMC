@@ -36,6 +36,40 @@ float radians2degrees(float radians) {
 	return radians * (180. / M_PI);
 }
 
+////
+void polar2cart(float r, float theta, float *a, float *b)
+{
+    *a = r * cosf(theta);
+    *b = r * sinf(theta);
+}
+
+void unsolve(float phi, float t1, float t2, float *x, float *y, float *z)
+{
+    // Calculate u,v coords for arm
+    float u01, v01, u12, v12;
+    polar2cart(a1, degrees2radians(t1), &u01, &v01);
+    polar2cart(a2, degrees2radians(t1) - degrees2radians(t2), &u12, &v12);
+
+    // Add vectors
+    float u, v;
+    u = u01 + u12; // + L3;
+    v = v01 + v12;
+
+    // Calculate in 3D space - note x/y reversal!
+    polar2cart(u, degrees2radians(phi), y, x);
+    *z = v;
+}
+
+float distance(float x1, float y1, float z1, float x2, float y2, float z2)
+{
+    float dx = x2-x1;
+    float dy = y2-y1;
+    float dz = z2-z1;
+
+    return dx*dx + dy*dy + dz*dz;
+}
+///
+
 void fk(float phi, float theta1, float theta2, float *x, float *y, float *z) {
 	// http://profmason.com/?p=569
 	// phi - rotation
@@ -47,15 +81,15 @@ void fk(float phi, float theta1, float theta2, float *x, float *y, float *z) {
 	theta3 = (180 - theta2) - (180 - theta1);
 	theta4 = (180 - theta2);
 	
-	*x = sinf(degrees2radians(phi)) * (a1 * cosf(degrees2radians(theta1)) + a2 * cosf(degrees2radians(theta1) - degrees2radians(theta2)));
-	*y = cosf(degrees2radians(phi)) * (a1 * cosf(degrees2radians(theta1)) + a2 * cosf(degrees2radians(theta1) - degrees2radians(theta2)));
-	*z = a2 * sinf(degrees2radians(theta1)) + (a2 * sinf(degrees2radians(theta1) - degrees2radians(theta2)));
+	*x = sinf(degrees2radians(phi)) * ((a1 * cosf(degrees2radians(theta1))) + (a2 * cosf(degrees2radians(theta1) - degrees2radians(theta2))));
+	*y = cosf(degrees2radians(phi)) * ((a1 * cosf(degrees2radians(theta1))) + (a2 * cosf(degrees2radians(theta1) - degrees2radians(theta2))));
+	*z = (a2 * sinf(degrees2radians(theta1))) + (a2 * sinf(degrees2radians(theta1) - degrees2radians(theta2)));
 }
 
 void km_test(void) {
 	float origin[3] = { 0, 0, 0 };
 	float shoulder[3] = { 0, 27, 125 };
-	float x, y, z;
+	float x, y, z, X, Y, Z, d;
 	float stO, stL, stR, phi, tL, tR;
 
 	for (stO = km_servo[servoRot].s_min; stO <= km_servo[servoRot].s_max; stO += 4) {
@@ -67,6 +101,9 @@ void km_test(void) {
 				fk(phi, tR, tL, &x, &y, &z);
 				//printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", tL, tR, phi, x, y, z);
 				printf("km_test.0\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", stL, stR, stO, x, y, z);
+				unsolve(phi, tR, tL, &X, &Y, &Z);
+				d = distance(x, y, z, X, Y, Z);
+				printf("km_test.1\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", stL, stR, stO, X, Y, Z, d);
 			}
 		}
 	}
