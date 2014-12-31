@@ -6,7 +6,6 @@
 const float PI=3.14159265359;
 
 // units in mm
-const float Z_offset = 137.;	// base to shoulder
 const float a1=145.5;			// shoulder to elbow length
 const float a2=158.7;			// elbow to wrise length
 const float b0=93;				// bed to shoulder height
@@ -23,11 +22,11 @@ typedef struct km_servo {
 
 #define SERVOS 5
 km_servo_t km_servo[SERVOS] = {
-	{ 115, 50, 40, 100 },	// elbow
-	{ 40, 90, 30, 80,  },	// shoulder
-	{ 10, 170, -90, 90 },	// base
-	{ 10, 170, -90, 90 },	// hand rotation
-	{ 10, 170, -90, 90 }	// hand
+	{ 115, 50, -87, -27 },	// elbow
+	{ 40, 90, 15, 65,  },	// shoulder
+	{ 10, 170, -80, 80 },	// base
+	{ 10, 170, -80, 80 },	// hand rotation
+	{ 10, 170, -80, 80 }	// hand
 };
 
 float map(float x, float in_min, float in_max, float out_min, float out_max) {
@@ -146,7 +145,7 @@ float distance(float x1, float y1, float z1, float x2, float y2, float z2) {
 ///
 
 void km_test(void) {
-	float x, y, z, phi, thetaS, thetaE, X, Y, Z, d;
+	float x, y, z, phi, thetaS, thetaE, X, Y, Z, d, sphi, sthetaS, sthetaE;
 	char line[1024];
 
 	while (fgets(line, 1024, stdin) != NULL) {
@@ -160,6 +159,10 @@ void km_test(void) {
 		unsolve(phi, thetaS, thetaE, &X, &Y, &Z);
 		d = distance(x, y, z, X, Y, Z);
 		printf("<\t%.2f\t%.2f\t%.2f\t\t%.2f\t%.2f\t%.2f\t%.2f\n", X, Y, Z, radians2degrees(phi), radians2degrees(thetaS), radians2degrees(thetaE), d);
+		sphi = map(radians2degrees(phi), km_servo[servoRot].t_min, km_servo[servoRot].t_max, km_servo[servoRot].s_min, km_servo[servoRot].s_max);
+		sthetaS = map(radians2degrees(thetaS), km_servo[servoR].t_min, km_servo[servoR].t_max, km_servo[servoR].s_min, km_servo[servoR].s_max);
+		sthetaE = map(radians2degrees(thetaE), km_servo[servoL].t_min, km_servo[servoL].t_max, km_servo[servoL].s_min, km_servo[servoL].s_max);
+		printf("G1 W1 F10 O%d R%d L%d\n", (int)roundf(sphi), (int)roundf(sthetaS), (int)roundf(sthetaE));
 		if (d > 0.01)
 			fatal_error("distance between forward and reverse solutions is > 0.01\n");
 		{
