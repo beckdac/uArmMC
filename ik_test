@@ -1,0 +1,32 @@
+#!/bin/bash
+
+mkdir -p /tmp/ik_test
+gplt=/tmp/ik_test/gplt
+
+y=`seq 100 10 180`
+
+for i in $y
+do
+	echo "0 $i 0" | ./uArmMC -t km_test | tail -3 > /tmp/ik_test/$i
+done
+
+cat << EOF > $gplt
+set xrange [0:200]
+set yrange [-10:180]
+EOF
+printf "plot " >> $gplt
+
+cnt=0
+for i in $y
+do
+	if [ "$cnt" -gt 0 ]
+	then
+		printf ", " >> $gplt
+	else
+		cnt=$(($cnt + 1))
+	fi
+	printf "'/tmp/ik_test/%s' w l t 'y=%s'" $i $i >> $gplt
+done
+printf "\npause -1\n" >> $gplt
+
+gnuplot $gplt
