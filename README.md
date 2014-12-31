@@ -4,6 +4,16 @@ uArmMC
 LiteArm / uArm master controller software for host system
 
 
+====== some measurements
+S	E	angle between bed and elbow to wrist vector
+R90	L50	-22
+R40	L50	-32
+R90	L115 -90
+R40 L115 -85
+
+At y = 140 mm when z = 0, actual z = 12.6
+at y = 220 mm when z = 0, actual z = 17.3
+
 ======
 Some notes for solving kinematics
 
